@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/reviews': 'http://localhost:3001',
+      '/api': 'http://localhost:3001', // Proxy tutto /api/*
     },
   },
   build: {
