@@ -10,7 +10,7 @@ export class ReviewsNotFoundError extends Error {
   }
 }
 
-export async function getReviews(query: ReviewsQuery): Promise<Review[]> {
+export async function getReviews(query: ReviewsQuery): Promise<StoredReviews> {
   const { id, hours = 48 } = query;
 
   const data = await fs
@@ -23,8 +23,13 @@ export async function getReviews(query: ReviewsQuery): Promise<Review[]> {
       throw err;
     });
 
-  const { reviews } = JSON.parse(data) as StoredReviews;
+  const stored = JSON.parse(data) as StoredReviews;
   const cutoff = Date.now() - hours * 60 * 60 * 1000;
 
-  return reviews.filter(review => new Date(review.date).getTime() >= cutoff);
+  return {
+    ...stored,
+    reviews: stored.reviews.filter(
+      review => new Date(review.date).getTime() >= cutoff
+    ),
+  };
 }

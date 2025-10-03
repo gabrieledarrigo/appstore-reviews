@@ -59,7 +59,7 @@ describe('Reviews', () => {
 
       const actual = await getReviews({ id: app.id, hours: 4 });
 
-      expect(actual).toEqual([
+      expect(actual.reviews).toEqual([
         {
           id: 'review_123',
           appId: app.id,
@@ -87,7 +87,7 @@ describe('Reviews', () => {
       const actual = await getReviews({ id: app.id }); // No hours specified
 
       // All reviews are present
-      expect(actual).toHaveLength(3);
+      expect(actual.reviews).toHaveLength(3);
     });
 
     it('should return an empty array if no reviews are in the time window', async () => {
@@ -112,7 +112,7 @@ describe('Reviews', () => {
 
       const actual = await getReviews({ id: app.id, hours: 24 });
 
-      expect(actual).toEqual([]);
+      expect(actual.reviews).toEqual([]);
     });
 
     it('should throw a ReviewsNotFoundError when a review file for the given appId does not exist', async () => {

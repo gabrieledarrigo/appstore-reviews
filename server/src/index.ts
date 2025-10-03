@@ -23,12 +23,15 @@ app.get('/', (_req, res) => {
   });
 });
 
-app.get('/api/v1/reviews', async (req, res, next) => {
-  const { appId, hours } = req.query;
+app.get('/api/v1/apps/:id/reviews', async (req, res, next) => {
+  const { id } = req.params;
+  const { hours } = req.query;
 
-  if (!appId) {
-    return res.status(400).json({
-      error: 'appId is required',
+  const app = config.apps.find(app => app.id === id);
+  if (!app) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: `App with id: ${id} is not configured`,
     });
   }
 
@@ -41,7 +44,7 @@ app.get('/api/v1/reviews', async (req, res, next) => {
   }
 
   const reviews = await getReviews({
-    id: appId as string,
+    id: app.id,
     hours: parsedHours,
   }).catch(err => {
     if (err instanceof ReviewsNotFoundError) {
