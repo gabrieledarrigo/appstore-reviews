@@ -7,8 +7,9 @@ import {
   it,
   jest,
 } from '@jest/globals';
-import { RssData, storeReviews } from './rss';
+import { RssData, StoredReviews, storeReviews } from './rss';
 import * as fs from 'fs/promises';
+import { App } from '../types';
 
 jest.mock('fs/promises');
 
@@ -29,9 +30,9 @@ describe('RSS Service', () => {
   });
 
   describe('storeReviews', () => {
-    it('should fetch and store reviews', async () => {
-      const appId = '123456789';
+    const app: App = { id: '123456789', name: 'Test App' };
 
+    it('should fetch and store reviews', async () => {
       const rssData = {
         feed: {
           entry: [
@@ -58,13 +59,14 @@ describe('RSS Service', () => {
 
       jest.spyOn(fs, 'writeFile').mockResolvedValue();
 
-      const expected = {
-        appId,
+      const expected: StoredReviews = {
+        id: app.id,
+        name: app.name,
         lastPolled: '2025-10-10T00:00:00.000Z',
         reviews: [
           {
             id: 'review_123',
-            appId,
+            appId: app.id,
             author: 'Gabriele',
             title: 'Great app!',
             content: 'I love this application',
@@ -74,25 +76,23 @@ describe('RSS Service', () => {
         ],
       };
 
-      await storeReviews(appId);
+      await storeReviews(app);
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://itunes.apple.com/us/rss/customerreviews/id=123456789/sortBy=mostRecent/page=1/json'
       );
       expect(fs.readFile).toHaveBeenCalledWith(
-        expect.stringContaining(`reviews_${appId}.json`),
+        expect.stringContaining(`reviews_${app.id}.json`),
         'utf-8'
       );
       expect(fs.writeFile).toHaveBeenCalledWith(
-        expect.stringContaining(`reviews_${appId}.json`),
+        expect.stringContaining(`reviews_${app.id}.json`),
         JSON.stringify(expected, null, 2),
         'utf-8'
       );
     });
 
     it('should handle fetch errors gracefully', async () => {
-      const appId = '123456789';
-
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
@@ -105,31 +105,31 @@ describe('RSS Service', () => {
 
       jest.spyOn(fs, 'writeFile').mockResolvedValue();
 
-      const expected = {
-        appId,
+      const expected: StoredReviews = {
+        id: app.id,
+        name: app.name,
         lastPolled: new Date().toISOString(),
         reviews: [],
       };
 
-      await storeReviews(appId);
+      await storeReviews(app);
 
       expect(fs.writeFile).toHaveBeenCalledWith(
-        expect.stringContaining(`reviews_${appId}.json`),
+        expect.stringContaining(`reviews_${app.id}.json`),
         JSON.stringify(expected, null, 2),
         'utf-8'
       );
     });
 
     it('should merge new reviews with existing ones to avoid duplicates and sort by date', async () => {
-      const appId = '123456789';
-
       const existingReviews = {
-        appId,
+        id: app.id,
+        name: app.name,
         lastPolled: '2025-09-01T00:00:00Z',
         reviews: [
           {
             id: 'review_123',
-            appId,
+            appId: app.id,
             author: 'Gabriele',
             title: 'Great app!',
             content: 'I love this application',
@@ -162,13 +162,14 @@ describe('RSS Service', () => {
         },
       };
 
-      const expected = {
-        appId,
+      const expected: StoredReviews = {
+        id: app.id,
+        name: app.name,
         lastPolled: '2025-10-10T00:00:00.000Z',
         reviews: [
           {
             id: 'review_124',
-            appId,
+            appId: app.id,
             author: 'Jane Smith',
             title: 'Not bad',
             content: 'It works fine',
@@ -189,10 +190,10 @@ describe('RSS Service', () => {
         .mockResolvedValueOnce(JSON.stringify(existingReviews));
       jest.spyOn(fs, 'writeFile').mockResolvedValue();
 
-      await storeReviews(appId);
+      await storeReviews(app);
 
       expect(fs.writeFile).toHaveBeenCalledWith(
-        expect.stringContaining(`reviews_${appId}.json`),
+        expect.stringContaining(`reviews_${app.id}.json`),
         JSON.stringify(expected, null, 2),
         'utf-8'
       );

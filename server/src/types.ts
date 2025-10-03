@@ -1,3 +1,8 @@
+export interface App {
+  id: string;
+  name: string;
+}
+
 export interface Review {
   id: string;
   appId: string;
@@ -9,6 +14,6 @@ export interface Review {
 }
 
 export interface ReviewsQuery {
-  appId: string;
+  id: string;
   hours?: number;
 }

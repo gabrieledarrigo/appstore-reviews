@@ -17,7 +17,7 @@ app.get('/', (_req, res) => {
     status: 'ok',
     version: '1',
     data: {
-      appIds: config.appIds,
+      apps: config.apps,
       pollingInterval: `${config.pollingIntervalInMinutes} minutes`,
     },
   });
@@ -41,7 +41,7 @@ app.get('/api/v1/reviews', async (req, res, next) => {
   }
 
   const reviews = await getReviews({
-    appId: appId as string,
+    id: appId as string,
     hours: parsedHours,
   }).catch(err => {
     if (err instanceof ReviewsNotFoundError) {
@@ -85,7 +85,7 @@ app.use((_, res) => {
 
 app.listen(port, 'localhost', () => {
   console.log(`Server running on http://localhost:${port}`);
-  startPolling(config.appIds);
+  startPolling(config.apps);
 });
 
 process.on('SIGTERM', () => {

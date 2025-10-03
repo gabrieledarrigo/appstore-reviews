@@ -1,45 +1,37 @@
-import {
-  describe,
-  it,
-  expect,
-  jest,
-  beforeEach,
-  afterEach,
-} from '@jest/globals';
-import * as rss from './rss';
+import { describe, it, expect, jest } from '@jest/globals';
+import { App } from '../types';
 
-jest.mock('./rss', () => ({
-  storeReviews: jest.fn(),
+jest.mock('./rss');
+jest.mock('../config/env', () => ({
+  config: {
+    APPS: [
+      { id: '123456789', name: 'Test App 1' },
+      { id: '987654321', name: 'Test App 2' },
+    ],
+    pollingIntervalInMinutes: 30,
+  },
 }));
 
 describe('Poller Service', () => {
-  const originalEnv = process.env;
-  const APP_IDS = ['123456789', '987654321'];
-
-  beforeEach(() => {
-    process.env = {
-      ...originalEnv,
-      APP_IDS: APP_IDS.join(','),
-    };
-  });
-
-  afterEach(() => {
-    process.env = originalEnv;
-  });
-
   describe('pollRSSFeeds', () => {
     it('should poll RSS feeds for given app IDs', async () => {
-      const mockStoreReviews = rss.storeReviews as jest.MockedFunction<
-        typeof rss.storeReviews
+      const APPS: App[] = [
+        { id: '123456789', name: 'Test App 1' },
+        { id: '', name: 'Test App 2' },
+      ];
+
+      const { storeReviews } = await import('./rss');
+      const { pollRSSFeeds } = await import('./poller');
+
+      const mockStoreReviews = storeReviews as jest.MockedFunction<
+        typeof storeReviews
       >;
       mockStoreReviews.mockResolvedValue();
 
-      const { pollRSSFeeds } = await import('./poller');
+      await pollRSSFeeds(APPS);
 
-      await pollRSSFeeds(APP_IDS);
-
-      expect(mockStoreReviews).toHaveBeenNthCalledWith(1, APP_IDS[0]);
-      expect(mockStoreReviews).toHaveBeenNthCalledWith(2, APP_IDS[1]);
+      expect(mockStoreReviews).toHaveBeenNthCalledWith(1, APPS[0]);
+      expect(mockStoreReviews).toHaveBeenNthCalledWith(2, APPS[1]);
     });
   });
 });

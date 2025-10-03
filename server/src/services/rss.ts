@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Review } from '../types';
+import { App, Review } from '../types';
 
 type Label = { label: string };
 
@@ -30,7 +30,8 @@ export type RssData = {
 };
 
 export interface StoredReviews {
-  appId: string;
+  id: string;
+  name: string;
   lastPolled: string; // ISO 8601
   reviews: Review[];
 }
@@ -62,23 +63,24 @@ async function parseRssData(
   }));
 }
 
-export async function storeReviews(appId: string): Promise<void> {
-  const reviews = await fetchRssFeed(appId)
-    .then(data => parseRssData(data, appId))
+export async function storeReviews(app: App): Promise<void> {
+  const { id, name } = app;
+  const reviews = await fetchRssFeed(id)
+    .then(data => parseRssData(data, id))
     .catch(err => {
       console.error('Error fetching RSS feed:', err);
       return [];
     });
 
   const dataDir = path.join(__dirname, '../../data');
-  const filePath = path.join(dataDir, `reviews_${appId}.json`);
+  const filePath = path.join(dataDir, `reviews_${id}.json`);
 
   await fs.mkdir(dataDir, { recursive: true });
 
   const existingData = await fs
     .readFile(filePath, 'utf-8')
     .then(data => JSON.parse(data))
-    .catch(() => ({ appId, reviews: [] }));
+    .catch(() => ({ id, name, reviews: [] }));
 
   const allReviews: Review[] = [...existingData.reviews, ...reviews];
 
@@ -87,8 +89,9 @@ export async function storeReviews(appId: string): Promise<void> {
     ...new Map(allReviews.map(review => [review.id, review])).values(),
   ].toSorted((a, b) => b.date.localeCompare(a.date));
 
-  const newData = {
-    appId,
+  const newData: StoredReviews = {
+    id,
+    name,
     lastPolled: new Date().toISOString(),
     reviews: uniqueReviews,
   };

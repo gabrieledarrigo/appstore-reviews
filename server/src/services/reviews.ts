@@ -11,16 +11,13 @@ export class ReviewsNotFoundError extends Error {
 }
 
 export async function getReviews(query: ReviewsQuery): Promise<Review[]> {
-  const { appId, hours = 48 } = query;
+  const { id, hours = 48 } = query;
 
   const data = await fs
-    .readFile(
-      path.join(__dirname, '../../data', `reviews_${appId}.json`),
-      'utf-8'
-    )
+    .readFile(path.join(__dirname, '../../data', `reviews_${id}.json`), 'utf-8')
     .catch(err => {
       if (err.code === 'ENOENT') {
-        throw new ReviewsNotFoundError(appId);
+        throw new ReviewsNotFoundError(id);
       }
 
       throw err;

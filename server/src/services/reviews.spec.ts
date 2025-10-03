@@ -2,6 +2,7 @@ import { describe, it, beforeAll, afterAll, expect, jest } from '@jest/globals';
 import * as fs from 'fs/promises';
 import { getReviews, ReviewsNotFoundError } from './reviews';
 import { StoredReviews } from './rss';
+import { App } from '../types';
 
 jest.mock('fs/promises');
 
@@ -16,15 +17,16 @@ describe('Reviews', () => {
   });
 
   describe('getReviews', () => {
-    const appId = '123456789';
+    const app: App = { id: '123456789', name: 'Test App 1' };
 
     const reviews: StoredReviews = {
-      appId,
+      id: app.id,
+      name: app.name,
       lastPolled: '2025-10-01T11:00:00.000Z',
       reviews: [
         {
           id: 'review_123',
-          appId,
+          appId: app.id,
           author: 'Gabriele',
           title: 'Great app!',
           content: 'I love this application',
@@ -33,7 +35,7 @@ describe('Reviews', () => {
         },
         {
           id: 'review_124',
-          appId,
+          appId: app.id,
           author: 'John Doe',
           title: 'Excellent',
           content: 'Perfect app',
@@ -42,7 +44,7 @@ describe('Reviews', () => {
         },
         {
           id: 'review_125',
-          appId,
+          appId: app.id,
           author: 'Jane Smith',
           title: 'Not bad',
           content: 'It works fine',
@@ -55,12 +57,12 @@ describe('Reviews', () => {
     it('should filter reviews within the time window (4 hours)', async () => {
       jest.spyOn(fs, 'readFile').mockResolvedValue(JSON.stringify(reviews));
 
-      const actual = await getReviews({ appId, hours: 4 });
+      const actual = await getReviews({ id: app.id, hours: 4 });
 
       expect(actual).toEqual([
         {
           id: 'review_123',
-          appId,
+          appId: app.id,
           author: 'Gabriele',
           title: 'Great app!',
           content: 'I love this application',
@@ -69,7 +71,7 @@ describe('Reviews', () => {
         },
         {
           id: 'review_124',
-          appId,
+          appId: app.id,
           author: 'John Doe',
           title: 'Excellent',
           content: 'Perfect app',
@@ -82,7 +84,7 @@ describe('Reviews', () => {
     it('should use default 48 hours if not specified', async () => {
       jest.spyOn(fs, 'readFile').mockResolvedValue(JSON.stringify(reviews));
 
-      const actual = await getReviews({ appId }); // No hours specified
+      const actual = await getReviews({ id: app.id }); // No hours specified
 
       // All reviews are present
       expect(actual).toHaveLength(3);
@@ -90,12 +92,13 @@ describe('Reviews', () => {
 
     it('should return an empty array if no reviews are in the time window', async () => {
       const oldReviews: StoredReviews = {
-        appId,
+        id: app.id,
+        name: app.name,
         lastPolled: '2025-10-01T11:00:00.000Z',
         reviews: [
           {
             id: 'review_999',
-            appId,
+            appId: app.id,
             author: 'Old User',
             title: 'Old review',
             content: 'Very old',
@@ -107,7 +110,7 @@ describe('Reviews', () => {
 
       jest.spyOn(fs, 'readFile').mockResolvedValue(JSON.stringify(oldReviews));
 
-      const actual = await getReviews({ appId, hours: 24 });
+      const actual = await getReviews({ id: app.id, hours: 24 });
 
       expect(actual).toEqual([]);
     });
@@ -123,7 +126,7 @@ describe('Reviews', () => {
 
       await expect(
         getReviews({
-          appId,
+          id: app.id,
         })
       ).rejects.toThrow(ReviewsNotFoundError);
     });
