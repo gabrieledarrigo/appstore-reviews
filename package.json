@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace server\" \"npm run dev --workspace application\"",
     "build": "npm run build --workspace server && npm run build --workspace application",
+    "test": "npm run test --workspace server",
     "start": "npm run start --workspace server",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
