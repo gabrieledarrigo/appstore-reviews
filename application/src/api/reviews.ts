@@ -8,15 +8,21 @@ export type Review = {
   date: string;
 };
 
-export type ReviewResponse = {
-  data: Review[];
+export type AppReviews = {
+  id: string;
+  name: string;
+  reviews: Review[];
 };
 
-export async function getReviews(
-  appId: string,
+export type AppReviewsResponse = {
+  data: AppReviews;
+};
+
+export async function getAppReviews(
+  id: string,
   hours: number = 48
-): Promise<Review[]> {
-  const response = await fetch(`/api/v1/reviews?appId=${appId}&hours=${hours}`);
+): Promise<AppReviews> {
+  const response = await fetch(`/api/v1/apps/${id}/reviews?hours=${hours}`);
 
   if (!response.ok) {
     const error = await response
@@ -26,7 +32,7 @@ export async function getReviews(
     throw new Error(error.message || `HTTP error! status: ${response.status}`);
   }
 
-  const { data }: ReviewResponse = await response.json();
+  const { data }: AppReviewsResponse = await response.json();
 
   return data;
 }
