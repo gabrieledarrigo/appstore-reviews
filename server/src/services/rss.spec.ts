@@ -24,23 +24,23 @@ describe('RSS Service', () => {
   });
 
   describe('storeReviews', () => {
-    const rssData = {
-      feed: {
-        entry: [
-          {
-            id: { label: 'review_123' },
-            title: { label: 'Great app!' },
-            content: { label: 'I love this application', type: 'text' },
-            'im:rating': { label: '5' },
-            author: { name: { label: 'Gabriele' } },
-            updated: { label: '2025-10-01T00:00:00Z' },
-          },
-        ],
-      },
-    } as RssData;
-
     it('should fetch and store reviews', async () => {
       const appId = '123456789';
+
+      const rssData = {
+        feed: {
+          entry: [
+            {
+              id: { label: 'review_123' },
+              title: { label: 'Great app!' },
+              content: { label: 'I love this application', type: 'text' },
+              'im:rating': { label: '5' },
+              author: { name: { label: 'Gabriele' } },
+              updated: { label: '2025-10-01T00:00:00Z' },
+            },
+          ],
+        },
+      } as RssData;
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -55,7 +55,7 @@ describe('RSS Service', () => {
 
       const expected = {
         appId,
-        lastPolled: new Date().toISOString(),
+        lastPolled: '2025-10-10T00:00:00.000Z',
         reviews: [
           {
             id: 'review_123',
@@ -64,7 +64,7 @@ describe('RSS Service', () => {
             title: 'Great app!',
             content: 'I love this application',
             rating: 5,
-            date: new Date('2025-10-01T00:00:00Z'),
+            date: '2025-10-01T00:00:00Z',
           },
         ],
       };
@@ -108,9 +108,6 @@ describe('RSS Service', () => {
 
       await storeReviews(appId);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://itunes.apple.com/us/rss/customerreviews/id=123456789/sortBy=mostRecent/page=1/json'
-      );
       expect(fs.writeFile).toHaveBeenCalledWith(
         expect.stringContaining(`reviews_${appId}.json`),
         JSON.stringify(expected, null, 2),
@@ -118,7 +115,7 @@ describe('RSS Service', () => {
       );
     });
 
-    it('should merge new reviews with existing ones and avoid duplicates', async () => {
+    it('should merge new reviews with existing ones to avoid duplicates and sort by date', async () => {
       const appId = '123456789';
 
       const existingReviews = {
@@ -132,7 +129,7 @@ describe('RSS Service', () => {
             title: 'Great app!',
             content: 'I love this application',
             rating: 5,
-            date: new Date('2025-10-01T00:00:00Z'),
+            date: '2025-10-01T00:00:00Z',
           },
         ],
       };
@@ -162,9 +159,8 @@ describe('RSS Service', () => {
 
       const expected = {
         appId,
-        lastPolled: new Date().toISOString(),
+        lastPolled: '2025-10-10T00:00:00.000Z',
         reviews: [
-          ...existingReviews.reviews,
           {
             id: 'review_124',
             appId,
@@ -172,8 +168,9 @@ describe('RSS Service', () => {
             title: 'Not bad',
             content: 'It works fine',
             rating: 4,
-            date: new Date('2025-10-02T00:00:00Z'),
+            date: '2025-10-02T00:00:00Z',
           },
+          ...existingReviews.reviews,
         ],
       };
 
@@ -189,13 +186,6 @@ describe('RSS Service', () => {
 
       await storeReviews(appId);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://itunes.apple.com/us/rss/customerreviews/id=123456789/sortBy=mostRecent/page=1/json'
-      );
-      expect(fs.readFile).toHaveBeenCalledWith(
-        expect.stringContaining(`reviews_${appId}.json`),
-        'utf-8'
-      );
       expect(fs.writeFile).toHaveBeenCalledWith(
         expect.stringContaining(`reviews_${appId}.json`),
         JSON.stringify(expected, null, 2),

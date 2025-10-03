@@ -5,7 +5,7 @@ export interface Review {
   title: string;
   content: string;
   rating: number;
-  date: Date;
+  date: string; // ISO 8601
 }
 
 export interface ReviewsQuery {

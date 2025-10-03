@@ -14,7 +14,7 @@ type RssEntry = {
     uri?: Label;
   };
   'im:version': Label;
-  updated: Label; // ISO date string
+  updated: Label; // ISO 8601
   link?: { attributes: { href: string } };
 };
 
@@ -31,17 +31,14 @@ export type RssData = {
 
 export interface StoredReviews {
   appId: string;
-  lastPolled: string; // ISO date string
+  lastPolled: string; // ISO 8601
   reviews: Review[];
 }
 
-const RSS_URL =
-  'https://itunes.apple.com/us/rss/customerreviews/id={appId}/sortBy=mostRecent/page=1/json';
-
 async function fetchRssFeed(appId: string): Promise<RssData> {
-  const url = RSS_URL.replace('{appId}', appId);
+  const URL = `https://itunes.apple.com/us/rss/customerreviews/id=${appId}/sortBy=mostRecent/page=1/json`;
 
-  const response = await fetch(url);
+  const response = await fetch(URL);
 
   if (!response.ok) {
     throw new Error('Failed to fetch RSS feed');
@@ -61,7 +58,7 @@ async function parseRssData(
     title: entry.title.label,
     content: entry.content.label,
     rating: parseInt(entry['im:rating'].label, 10),
-    date: new Date(entry.updated.label),
+    date: entry.updated.label,
   }));
 }
 
@@ -83,12 +80,12 @@ export async function storeReviews(appId: string): Promise<void> {
     .then(data => JSON.parse(data))
     .catch(() => ({ appId, reviews: [] }));
 
-  const allReviews = [...existingData.reviews, ...reviews];
+  const allReviews: Review[] = [...existingData.reviews, ...reviews];
 
   // Remove duplicates based on review ID
   const uniqueReviews = [
     ...new Map(allReviews.map(review => [review.id, review])).values(),
-  ];
+  ].toSorted((a, b) => b.date.localeCompare(a.date));
 
   const newData = {
     appId,
