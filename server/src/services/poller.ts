@@ -1,6 +1,5 @@
+import { config } from '../config/env';
 import { storeReviews } from './rss';
-
-export const POLLING_INTERVAL_IN_MINUTES = 30;
 
 let pollingId: NodeJS.Timeout | null = null;
 
@@ -27,7 +26,7 @@ export async function startPolling(appIds: string[]): Promise<void> {
         console.error('Error during polling:', error);
       });
     },
-    POLLING_INTERVAL_IN_MINUTES * 60 * 1000
+    config.pollingIntervalInMinutes * 60 * 1000
   );
 }
 

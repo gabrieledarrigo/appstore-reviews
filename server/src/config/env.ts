@@ -8,6 +8,9 @@ export const config = {
     ? process.env.APP_IDS.split(',').map(id => id.trim())
     : [],
   nodeEnv: process.env.NODE_ENV || 'development',
+  pollingIntervalInMinutes: process.env.POLLING_INTERVAL_IN_MINUTES
+    ? parseInt(process.env.POLLING_INTERVAL_IN_MINUTES, 10)
+    : 30,
 } as const;
 
 if (config.appIds.length === 0) {

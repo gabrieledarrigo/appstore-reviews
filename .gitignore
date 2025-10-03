@@ -138,6 +138,9 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# Editor
+.vscode
+
 # Data
 server/data/*
 !server/data/.gitkeep

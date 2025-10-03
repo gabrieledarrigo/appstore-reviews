@@ -13,7 +13,13 @@ app.use((_req, res, next) => {
 });
 
 app.get('/', (_req, res) => {
-  res.json({ data: 'Server is running' });
+  res.json({
+    status: 'ok',
+    data: {
+      appIds: config.appIds,
+      pollingInterval: `${config.pollingIntervalInMinutes} minutes`,
+    },
+  });
 });
 
 app.get('/reviews', async (req, res, next) => {
@@ -25,9 +31,17 @@ app.get('/reviews', async (req, res, next) => {
     });
   }
 
+  const parsedHours = hours ? parseInt(hours as string) : undefined;
+
+  if (parsedHours !== undefined && (isNaN(parsedHours) || parsedHours <= 0)) {
+    return res.status(400).json({
+      error: 'hours must be a positive number',
+    });
+  }
+
   const reviews = await getReviews({
     appId: appId as string,
-    hours: hours ? parseInt(hours as string, 10) : undefined,
+    hours: parsedHours,
   }).catch(err => {
     if (err instanceof ReviewsNotFoundError) {
       return res.status(404).json({
