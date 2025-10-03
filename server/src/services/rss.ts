@@ -24,7 +24,7 @@ export type RssData = {
       name: Label;
       uri: Label;
     };
-    entry: RssEntry[];
+    entry?: RssEntry[];
     updated: Label;
   };
 };
@@ -50,14 +50,11 @@ async function fetchRssFeed(appId: string): Promise<RssData> {
   return response.json();
 }
 
-export async function storeReviews(appId: string): Promise<void> {
-  const rssData = await fetchRssFeed(appId).catch(err => {
-    console.error('Error fetching RSS feed:', err);
-
-    return { feed: { entry: [] } } as unknown as RssData;
-  });
-
-  const reviews = rssData.feed.entry.map(entry => ({
+async function parseRssData(
+  rssData: RssData,
+  appId: string
+): Promise<Review[]> {
+  return (rssData.feed.entry ?? []).map(entry => ({
     id: entry.id.label,
     appId,
     author: entry.author.name.label,
@@ -66,6 +63,15 @@ export async function storeReviews(appId: string): Promise<void> {
     rating: parseInt(entry['im:rating'].label, 10),
     date: new Date(entry.updated.label),
   }));
+}
+
+export async function storeReviews(appId: string): Promise<void> {
+  const reviews = await fetchRssFeed(appId)
+    .then(data => parseRssData(data, appId))
+    .catch(err => {
+      console.error('Error fetching RSS feed:', err);
+      return [];
+    });
 
   const filePath = path.join(__dirname, `../../data/reviews_${appId}.json`);
 
