@@ -15,6 +15,7 @@ app.use((_req, res, next) => {
 app.get('/', (_req, res) => {
   res.json({
     status: 'ok',
+    version: '1',
     data: {
       appIds: config.appIds,
       pollingInterval: `${config.pollingIntervalInMinutes} minutes`,
@@ -22,7 +23,7 @@ app.get('/', (_req, res) => {
   });
 });
 
-app.get('/reviews', async (req, res, next) => {
+app.get('/api/v1/reviews', async (req, res, next) => {
   const { appId, hours } = req.query;
 
   if (!appId) {
