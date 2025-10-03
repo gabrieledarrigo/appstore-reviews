@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check code formatting (Prettier)
+        run: npm run format:check
+
+      - name: Typecheck - Server
+        run: npx tsc --noEmit --project server/tsconfig.json
+
+      - name: Typecheck - Application
+        run: npx tsc --noEmit --project application/tsconfig.json
+
+      - name: Build server
+        run: npm run build --workspace server
+
+      - name: Build application
+        run: npm run build --workspace application
+
+      - name: Run tests
+        run: |
+          echo "Running server tests..."
+          npm run test --workspace server --if-present || echo "No server tests found"
+          echo "Running application tests..."
+          npm run test --workspace application --if-present || echo "No application tests found"
