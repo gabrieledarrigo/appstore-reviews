@@ -73,7 +73,10 @@ export async function storeReviews(appId: string): Promise<void> {
       return [];
     });
 
-  const filePath = path.join(__dirname, `../../data/reviews_${appId}.json`);
+  const dataDir = path.join(__dirname, '../../data');
+  const filePath = path.join(dataDir, `reviews_${appId}.json`);
+
+  await fs.mkdir(dataDir, { recursive: true });
 
   const existingData = await fs
     .readFile(filePath, 'utf-8')
