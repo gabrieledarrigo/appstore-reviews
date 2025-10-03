@@ -1,4 +1,5 @@
 import {
+  afterAll,
   beforeAll,
   beforeEach,
   describe,
@@ -21,6 +22,10 @@ describe('RSS Service', () => {
 
   beforeEach(() => {
     global.fetch = mockFetch;
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
   });
 
   describe('storeReviews', () => {
