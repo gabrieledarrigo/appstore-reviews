@@ -1,6 +1,6 @@
 import { describe, it, beforeAll, afterAll, expect, jest } from '@jest/globals';
 import * as fs from 'fs/promises';
-import { getReviews } from './reviews';
+import { getReviews, ReviewsNotFoundError } from './reviews';
 import { StoredReviews } from './rss';
 
 jest.mock('fs/promises');
@@ -110,6 +110,22 @@ describe('Reviews', () => {
       const actual = await getReviews({ appId, hours: 24 });
 
       expect(actual).toEqual([]);
+    });
+
+    it('should throw a ReviewsNotFoundError when a review file for the given appId does not exist', async () => {
+      class TestError extends Error {
+        constructor(public readonly code: string) {
+          super('File not found');
+        }
+      }
+
+      jest.spyOn(fs, 'readFile').mockRejectedValue(new TestError('ENOENT'));
+
+      await expect(
+        getReviews({
+          appId,
+        })
+      ).rejects.toThrow(ReviewsNotFoundError);
     });
   });
 });

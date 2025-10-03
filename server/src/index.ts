@@ -1,20 +1,10 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
-
+import { config } from './config/env';
 import express from 'express';
 import { startPolling, stopPolling } from './services/poller';
-
-const APP_IDS = process.env.APP_IDS
-  ? process.env.APP_IDS.split(',').map(id => id.trim())
-  : [];
-
-if (APP_IDS.length === 0) {
-  throw new Error('No APP_IDS provided in environment variables');
-}
+import { getReviews, ReviewsNotFoundError } from './services/reviews';
 
 const app = express();
-const port = 3001;
+const port = config.port;
 
 app.use((_req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -23,11 +13,35 @@ app.use((_req, res, next) => {
 });
 
 app.get('/', (_req, res) => {
-  res.json({ message: 'Server is running' });
+  res.json({ data: 'Server is running' });
 });
 
-app.get('/reviews', (_req, res) => {
-  res.json({ message: 'Reviews endpoint', data: [] });
+app.get('/reviews', async (req, res, next) => {
+  const { appId, hours } = req.query;
+
+  if (!appId) {
+    return res.status(400).json({
+      error: 'appId is required',
+    });
+  }
+
+  const reviews = await getReviews({
+    appId: appId as string,
+    hours: hours ? parseInt(hours as string, 10) : undefined,
+  }).catch(err => {
+    if (err instanceof ReviewsNotFoundError) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: err.message,
+      });
+    }
+
+    return next(err);
+  });
+
+  res.json({
+    data: reviews,
+  });
 });
 
 app.use(
@@ -50,14 +64,13 @@ app.use(
   }
 );
 
-// 404 handler
-app.use((req, res) => {
+app.use((_, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
 app.listen(port, 'localhost', () => {
   console.log(`Server running on http://localhost:${port}`);
-  startPolling(APP_IDS);
+  startPolling(config.appIds);
 });
 
 process.on('SIGTERM', () => {
